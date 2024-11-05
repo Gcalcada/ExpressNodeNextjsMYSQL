@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  
+}
+/* styles.css ou seu arquivo CSS global */
+
+body {
+  transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave */
+}
+
+/* Estilos para o modo claro */
+body {
+  background-color: #ffffff; /* Cor de fundo padrão */
+  color: #000; /* Cor de texto padrão */
+}
+
+body.dark {
+  background-color: #1a202c; /* Cor de fundo escura */
+  color: #fff; /* Cor de texto escura */
+}
+
+/* Outros estilos para elementos específicos */
+header {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+header {
+  background-color: white; /* Cor de fundo do cabeçalho claro */
+  color: black; /* Cor do texto do cabeçalho claro */
+}
+
+header.dark {
+  background-color: #333; /* Cor de fundo do cabeçalho escuro */
+  color: white; /* Cor do texto do cabeçalho claro */
+}
+
