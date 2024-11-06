@@ -1,6 +1,6 @@
 // src/components/ProductCategories.js
 import React from 'react';
-
+import Image from 'next/image';
 const categories = [
   { name: "Moda", image: "/images/shoes-8212405_1280.jpg" },
   { name: "Eletrônicos", image: "/images/hospitality-3793946_1280.jpg" },
@@ -15,7 +15,9 @@ const ProductCategories = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {categories.map((category, index) => (
           <div key={index} className="group relative bg-gray-200 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <img 
+            <Image 
+              width={200} 
+              height={200}
               src={category.image} 
               alt={category.name} 
               className="w-full h-40 object-cover transition-transform duration-300 transform group-hover:scale-105" 

@@ -3,6 +3,7 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import Link from 'next/link'; // Importação do Link do Next.js
 
 const Footer = () => {
   return (
@@ -15,16 +16,24 @@ const Footer = () => {
             <h4 className="font-bold mb-2">Links</h4>
             <ul className="space-y-1">
               <li>
-                <a href="/" className="hover:text-gray-400">Home</a>
+                <Link href="/">
+                  Home
+                </Link>
               </li>
               <li>
-                <a href="/about" className="hover:text-gray-400">About Us</a>
+                <Link href="/about">
+                  About Us
+                </Link>
               </li>
               <li>
-                <a href="/products" className="hover:text-gray-400">Products</a>
+                <Link href="/products">
+                Products
+                </Link>
               </li>
               <li>
-                <a href="/contact" className="hover:text-gray-400">Contact</a>
+                <Link href="/contact">
+                Contact
+                </Link>
               </li>
             </ul>
           </div>
@@ -51,9 +60,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-
-
-    
     </footer>
   );
 };
