@@ -1,53 +1,111 @@
 // pages/api/tires.js
-
-import multer from 'multer';
+import fs from 'fs';
 import path from 'path';
+import formidable from 'formidable';
 
-// Configuração do Multer para upload de arquivos
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: './uploads',  // Diretório seguro no servidor
-        filename: (req, file, cb) => {
-            cb(null, Date.now() + path.extname(file.originalname));
-        }
-    }),
-    limits: { fileSize: 5 * 1024 * 1024 }, // Limite de 5MB para a imagem
-});
-
-// Aqui o Next.js usa o 'apiHandler' para tratar a solicitação
 export const config = {
     api: {
-        bodyParser: false, // Desativar o bodyParser para lidar com o FormData
+        bodyParser: false, // Desativar o body parser padrão
     },
-};
+};  
 
-const handler = (req, res) => {
+let tires = []; // Simulação de banco de dados na memória
+
+export default async function handler(req, res) {
     if (req.method === 'POST') {
-        upload.single('image')(req, res, (err) => {
+        // Inserir novo pneu
+        const form = new formidable.IncomingForm();
+        form.uploadDir = './images'; // Diretório onde as imagens serão armazenadas
+        form.keepExtensions = true; // Manter extensões dos arquivos
+
+        form.parse(req, (err, fields, files) => {
             if (err) {
-                return res.status(500).json({ message: 'Erro no upload da imagem.' });
+                return res.status(500).json({ error: 'Erro ao processar o formulário' });
             }
 
-            // Agora os dados do formulário e o arquivo estão disponíveis
-            const { brand, size, condition, price, stock } = req.body;
-            const imagePath = req.file ? req.file.path : null;
+            const { brand, size, condition, price, stock } = fields;
+            const imageFile = files.image;
 
-            // Exemplo de validação simples
-            if (!brand || !size || !price || !stock) {
-                return res.status(400).json({ message: 'Dados incompletos ou inválidos.' });
-            }
+            // Renomear o arquivo e movê-lo para a pasta de destino
+            const newPath = path.join(form.uploadDir, imageFile.newFilename);
+            fs.rename(imageFile.filepath, newPath, (err) => {
+                if (err) {
+                    return res.status(500).json({ error: 'Erro ao salvar a imagem' });
+                }
 
-            // Você pode agora salvar os dados de forma segura no banco de dados, sem expô-los ao cliente
-            // Exemplo: salvar os dados no banco de dados (pode ser um MySQL, MongoDB, etc.)
-            
-            // Retorna uma resposta segura, sem expor dados sensíveis
-            return res.status(200).json({
-                message: 'Pneu adicionado com sucesso!',
+                // Armazenar os dados do pneu (aqui você deve salvar no banco de dados)
+                const newTire = { brand, size, condition, price, stock, imagePath: newPath };
+                tires.push(newTire); // Adicionando à "base de dados" em memória
+
+                return res.status(200).json({ message: 'Pneu adicionado com sucesso!', tire: newTire });
             });
         });
-    } else {
-        res.status(405).json({ message: 'Método não permitido' });
-    }
-};
+    } else if (req.method === 'DELETE') {
+        // Remover um pneu
+        const { brand } = req.body; // Supondo que você esteja recebendo o nome da marca para identificar o pneu a ser removido
 
-export default handler;
+        const tireIndex = tires.findIndex(tire => tire.brand === brand);
+        if (tireIndex === -1) {
+            return res.status(404).json({ error: 'Pneu não encontrado' });
+        }
+
+        // Remover a imagem do servidor
+        const tireToDelete = tires[tireIndex];
+        fs.unlink(tireToDelete.imagePath, (err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao remover a imagem do servidor' });
+            }
+            tires.splice(tireIndex, 1); // Remover do array
+
+            return res.status(200).json({ message: 'Pneu removido com sucesso!' });
+        });
+    } else if (req.method === 'PUT') {
+        // Atualizar um pneu
+        const form = new formidable.IncomingForm();
+        form.uploadDir = './images'; // Diretório onde as imagens serão armazenadas
+        form.keepExtensions = true; // Manter extensões dos arquivos
+
+        form.parse(req, (err, fields, files) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao processar o formulário' });
+            }
+
+            const { oldBrand, brand, size, condition, price, stock } = fields;
+            const tireIndex = tires.findIndex(tire => tire.brand === oldBrand);
+
+            if (tireIndex === -1) {
+                return res.status(404).json({ error: 'Pneu não encontrado' });
+            }
+
+            const updatedTire = { ...tires[tireIndex], brand, size, condition, price, stock };
+
+            // Verificar se uma nova imagem foi enviada
+            if (files.image && files.image.filepath) {
+                // Remover a imagem antiga do servidor
+                fs.unlink(tires[tireIndex].imagePath, (err) => {
+                    if (err) {
+                        return res.status(500).json({ error: 'Erro ao remover a imagem antiga do servidor' });
+                    }
+
+                    // Renomear o novo arquivo e movê-lo para a pasta de destino
+                    const newPath = path.join(form.uploadDir, files.image.newFilename);
+                    fs.rename(files.image.filepath, newPath, (err) => {
+                        if (err) {
+                            return res.status(500).json({ error: 'Erro ao salvar a nova imagem' });
+                        }
+                        updatedTire.imagePath = newPath; // Atualizar o caminho da imagem
+                        tires[tireIndex] = updatedTire; // Atualizar o pneu na "base de dados"
+                        return res.status(200).json({ message: 'Pneu atualizado com sucesso!', tire: updatedTire });
+                    });
+                });
+            } else {
+                // Se não houver nova imagem, apenas atualiza os dados
+                tires[tireIndex] = updatedTire; // Atualizar o pneu na "base de dados"
+                return res.status(200).json({ message: 'Pneu atualizado com sucesso!', tire: updatedTire });
+            }
+        });
+    } else {
+        res.setHeader('Allow', ['POST', 'DELETE', 'PUT']);
+        res.status(405).end(`Method ${req.method} Not Allowed`);
+    }
+}
